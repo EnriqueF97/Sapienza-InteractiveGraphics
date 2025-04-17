@@ -1,3 +1,53 @@
+const meshVS = `
+			attribute vec3 pos; 
+			attribute vec2 texCoord; 
+			attribute vec3 normal;
+
+			uniform mat4 mvp; 
+			uniform mat4 yzSwap;
+
+			varying vec2 v_texCoord; 
+			varying vec3 v_normal; 
+
+			void main()
+			{
+				v_texCoord = texCoord;
+				v_normal = normal;
+
+				gl_Position = mvp * yzSwap * vec4(pos,1.0); 
+			}`;
+
+const meshFS = `
+			precision mediump float;
+
+			uniform bool showTex;
+			uniform bool showNormals;
+			uniform sampler2D tex;
+			uniform vec3 color; 
+
+			varying vec2 v_texCoord;
+			varying vec3 v_normal;
+
+			void main()
+			{
+				if(showTex && showNormals){
+					vec4 texColor = texture2D(tex, v_texCoord);  
+					gl_FragColor =  vec4(
+							v_normal.x * texColor.x, 
+							v_normal.y * texColor.y, 
+							v_normal.z * texColor.z,
+							1.0
+						);
+				}
+				else if(showTex){
+					gl_FragColor = texture2D(tex, v_texCoord);
+				}else if(showNormals){
+					gl_FragColor =  vec4(v_normal.x, v_normal.y, v_normal.z, 1.0);
+				}else{
+					gl_FragColor = vec4(1,gl_FragCoord.z*gl_FragCoord.z,0,1);
+				}
+			}`;
+
 // Multiplies two matrices and returns the result A*B.
 // The arguments A and B are arrays, representing column-major matrices.
 function MatrixMult(A, B) {
@@ -110,15 +160,12 @@ class MeshDrawer {
   // Note that this method can be called multiple times.
   setMesh(vertPos, texCoords, normalDirs) {
     // [TO-DO] Update the contents of the vertex buffer objects.
-    // Bind & upload vertex positions
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertbuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
 
-    // update texture coordinates
     gl.bindBuffer(gl.ARRAY_BUFFER, this.texbuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
 
-    // update normal directions
     gl.bindBuffer(gl.ARRAY_BUFFER, this.normalbuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normalDirs), gl.STATIC_DRAW);
 
@@ -129,7 +176,6 @@ class MeshDrawer {
   // "Swap Y-Z Axes" checkbox.
   // The argument is a boolean that indicates if the checkbox is checked.
   swapYZ(swap) {
-    // [TO-DO] Set the uniform parameter(s) of the vertex shader
     // [TO-DO] Set the uniform parameter(s) of the vertex shader
     if (swap) {
       this.yz = MatrixMult(
@@ -219,53 +265,3 @@ class MeshDrawer {
     gl.uniform1i(this.showTexLoc, show);
   }
 }
-
-const meshVS = `
-			attribute vec3 pos; 
-			attribute vec2 texCoord; 
-			attribute vec3 normal;
-
-			uniform mat4 mvp; 
-			uniform mat4 yzSwap;
-
-			varying vec2 v_texCoord; 
-			varying vec3 v_normal; 
-
-			void main()
-			{
-				v_texCoord = texCoord;
-				v_normal = normal;
-
-				gl_Position = mvp * yzSwap * vec4(pos,1.0); 
-			}`;
-
-const meshFS = `
-			precision mediump float;
-
-			uniform bool showTex;
-			uniform bool showNormals;
-			uniform sampler2D tex;
-			uniform vec3 color; 
-
-			varying vec2 v_texCoord;
-			varying vec3 v_normal;
-
-			void main()
-			{
-				if(showTex && showNormals){
-					vec4 texColor = texture2D(tex, v_texCoord);  
-					gl_FragColor =  vec4(
-							v_normal.x * texColor.x, 
-							v_normal.y * texColor.y, 
-							v_normal.z * texColor.z,
-							1.0
-						);
-				}
-				else if(showTex){
-					gl_FragColor = texture2D(tex, v_texCoord);
-				}else if(showNormals){
-					gl_FragColor =  vec4(v_normal.x, v_normal.y, v_normal.z, 1.0);
-				}else{
-					gl_FragColor = vec4(1,gl_FragCoord.z*gl_FragCoord.z,0,1);
-				}
-			}`;
