@@ -1,6 +1,7 @@
 <doctype html>
-<!-- Copyright 2020, Cem Yuksel, University of Utah -->
-<html>
+  <!-- Copyright 2020, Cem Yuksel, University of Utah -->
+  <!-- prettier-ignore -->
+  <html>
 <head>
 <title>CS 4600 - Project 4</title>
 <script type="text/javascript" id="includedscript" src="project4.js"></script>
@@ -310,7 +311,7 @@ function LoadObj( param )
 			var scale = 1/maxSize;
 			mesh.shiftAndScale( shift, scale );
 			var buffers = mesh.getVertexBuffers();
-			meshDrawer.setMesh( buffers.positionBuffer, buffers.texCoordBuffer );
+			meshDrawer.setMesh( buffers.positionBuffer, buffers.texCoordBuffer, buffers.normalBuffer );
 			DrawScene();
 		}
 		reader.readAsText( param.files[0] );
@@ -438,3 +439,5 @@ canvas {
 </div>
 </body>
 </html>
+  ></doctype
+>
