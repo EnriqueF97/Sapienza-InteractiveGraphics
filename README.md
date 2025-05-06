@@ -12,7 +12,12 @@
 - [Description](https://graphics.cs.utah.edu/courses/cs4600/fall2024/?prj=2)
 - [Repository](https://github.com/engharat/project2_Transformations)
 
-**Second homework: TRIANGULAR MESH**
+**Third homework: TRIANGULAR MESH**
 
 - [Description](https://graphics.cs.utah.edu/courses/cs4600/fall2024/?prj=4)
 - [Repository](https://github.com/engharat/project3_TriangularMeshes)
+
+**Fourth homework: SHADING**
+
+- [Description](https://graphics.cs.utah.edu/courses/cs4600/fall2024/?prj=5)
+- [Repository](https://github.com/engharat/project4_Shading)
