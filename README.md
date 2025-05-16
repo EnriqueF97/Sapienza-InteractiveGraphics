@@ -21,3 +21,13 @@
 
 - [Description](https://graphics.cs.utah.edu/courses/cs4600/fall2024/?prj=5)
 - [Repository](https://github.com/engharat/project4_Shading)
+
+**Fifth homework: PHYSICS BASED ANIMATION**
+
+- [Description](https://graphics.cs.utah.edu/courses/cs4600/fall2024/?prj=7)
+- [Repository](https://github.com/engharat/project6_Animations)
+
+**Sixth homework: RAYTRACING**
+
+- [Description](https://graphics.cs.utah.edu/courses/cs4600/fall2024/?prj=6)
+- [Repository](https://github.com/engharat/project5_RayTracing)
