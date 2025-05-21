@@ -31,11 +31,11 @@ let renderer = null,
   gunHealth = 20, // players health
   asteroidDamage = 1, // how much an asteroid hit will deal
   cannonRotationSpeed = 1.5, // more is faster rotation
-  scorePerAsteroidDestroyed = 100, // score per asteroid destroyed (lol)
-  asteroidHealth = 70, // health of each asteroid
+  scorePerAsteroidDestroyed = 10, // score per asteroid destroyed (lol)
+  asteroidHealth = 60, // health of each asteroid
   slowCameraMovementSpeed = 1, // more is slower camera movement
   test = true,
-  outOfBoundsLimit = 150;
+  outOfBoundsLimit = 200;
 
 // estados de movimiento de cañon
 let movingRight = false,
@@ -243,9 +243,7 @@ function createWorld() {
     invincibleBBoxCol = new THREE.BoxHelper(invincibleBox, 0x00ff00); // box helper
     ground.add(invincibleBox);
     ground.add(invincibleBoxCol);
-    //ground.add(invincibleBBoxCol);
   }
-  asteroidBase();
 
   function platformFunction() {
     textureUrl = "images/ak_images/platform.jpg";
@@ -287,7 +285,6 @@ function createWorld() {
     ground.add(platformBBox);
     asteroidHome.add(ground);
   }
-  platformFunction();
 
   function createCannon() {
     // gun wrapper
@@ -399,10 +396,9 @@ function createWorld() {
 
     asteroidHome.add(gun);
   }
-  createCannon();
 
   function planets() {
-    textureUrl = "images/sun.jpg"; // sun
+    textureUrl = "images/ak_images/sun.jpg"; // sun
     texture = new THREE.TextureLoader().load(textureUrl);
     material = new THREE.MeshBasicMaterial({ map: texture });
 
@@ -420,9 +416,9 @@ function createWorld() {
     sun.add(sunlight);
     world.add(sun);
 
-    textureUrl = "images/earth_atmos_2048.jpg"; //                                                          earth and moon
+    textureUrl = "images/ak_images/earth_atmos_2048.jpg"; //                                                          earth and moon
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/earthBump.jpg";
+    bumpTextureUrl = "images/ak_images/earthBump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 1.5 });
     geometry = new THREE.SphereGeometry(0.25, 50, 50);
@@ -430,9 +426,9 @@ function createWorld() {
     earth = new THREE.Mesh(geometry, material);
     earth.receiveShadow = true;
     earthGroup.add(earth);
-    textureUrl = "images/moon_1024.jpg";
+    textureUrl = "images/ak_images/moon_1024.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/moon_bump.jpg";
+    bumpTextureUrl = "images/ak_images/moon_bump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 0.2 });
     geometry = new THREE.SphereGeometry(0.06, 30, 30);
@@ -445,9 +441,9 @@ function createWorld() {
     world.add(earthGroup);
 
     //                                                                              mars
-    textureUrl = "images/marsmap1k.jpg";
+    textureUrl = "images/ak_images/marsmap1k.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/marsbump1k.jpg";
+    bumpTextureUrl = "images/ak_images/marsbump1k.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 6 });
     geometry = new THREE.SphereGeometry(0.3, 30, 30);
@@ -461,9 +457,9 @@ function createWorld() {
     world.add(marsRotation);
 
     //                                                                          saturn
-    textureUrl = "images/saturnmap.jpg";
+    textureUrl = "images/ak_images/saturnmap.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/uranusBump.jpg";
+    bumpTextureUrl = "images/ak_images/uranusBump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 7 });
     geometry = new THREE.SphereGeometry(0.5, 50, 50);
@@ -471,7 +467,7 @@ function createWorld() {
     saturn.castShadow = true;
     saturn.rotation.x = Math.PI / 2;
     // ring
-    textureUrl = "images/saturnringcolor.jpg";
+    textureUrl = "images/ak_images/saturnringcolor.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, transparent: false, opacity: 0.7 });
     geometry = new THREE.RingBufferGeometry(3, 5, 64);
@@ -486,7 +482,7 @@ function createWorld() {
     ring.receiveShadow = true;
     // moons
     geometry = new THREE.SphereGeometry(0.02, 20, 20);
-    textureUrl = "images/saturnmap.jpg";
+    textureUrl = "images/ak_images/saturnmap.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture });
     moon1 = new THREE.Mesh(geometry, material);
@@ -518,9 +514,9 @@ function createWorld() {
     world.add(saturnGroup);
 
     //                                                                                          uranus
-    textureUrl = "images/uranusmap.jpg";
+    textureUrl = "images/ak_images/uranusmap.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/uranusBump.jpg";
+    bumpTextureUrl = "images/ak_images/uranusBump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 0.05 });
     geometry = new THREE.SphereGeometry(0.3, 30, 30);
@@ -552,6 +548,11 @@ function createWorld() {
     uranusGroup.add(moon5);
     world.add(uranusGroup);
   }
+
+  // World creation
+  asteroidBase();
+  createCannon();
+  platformFunction();
   planets();
 
   gun.updateMatrixWorld();
@@ -575,8 +576,6 @@ function fireBullet(position) {
   bulletCount += 1;
   bullet.position = position;
   bullet.position.y += 1.8;
-  // let indBulletLight = bulletLight.clone();
-  // bullet.add(indBulletLight);
 
   // update every group's matrix to get their true world positions
   asteroidHome.updateMatrixWorld();
@@ -625,31 +624,6 @@ function createAsteroid() {
 
   // collision box
   asteroid.box = new THREE.Box3().setFromObject(asteroid);
-
-  asteroidsArray.push(asteroid);
-  world.add(asteroid);
-}
-
-// this is used for debugging, spawns an asteroid on the given coordenates
-function createAsteroidFrom(x, y, z) {
-  let asteroid = asteroidModel.clone();
-  asteroid.health = 100;
-  asteroid.asteroidId = asteroidCount;
-  asteroidCount += 1;
-  asteroid.position.set(x, y, z);
-  // asteroid aiming to asteroidHome
-  asteroidHome.updateMatrixWorld();
-  world.updateMatrixWorld();
-  let shootDirection = new THREE.Vector3();
-  asteroidHome.getWorldDirection(shootDirection);
-  // speed
-  asteroid.movZ = z / 200;
-  asteroid.movY = y / 200;
-  asteroid.movX = x / 200;
-
-  // collision box
-  asteroid.box = new THREE.Box3().setFromObject(asteroid);
-  asteroid.bbox = new THREE.BoxHelper(asteroid, 0x00ff00);
 
   asteroidsArray.push(asteroid);
   world.add(asteroid);
@@ -735,13 +709,13 @@ function animate() {
     // bullets update
     for (const bullet of bulletsArray) {
       // removing of bullets who lived to tell the story
-      let deltaTimeBullet = now - bullet.time;
-      if (deltaTimeBullet > 1000) {
-        world.remove(bullet);
-        let index = bulletsArray.indexOf(bullet);
-        bulletsArray.splice(index, 1);
-        break;
-      }
+      // let deltaTimeBullet = now - bullet.time;
+      // if (deltaTimeBullet > 1500) {
+      //   world.remove(bullet);
+      //   let index = bulletsArray.indexOf(bullet);
+      //   bulletsArray.splice(index, 1);
+      //   break;
+      // }
 
       // movement
       bullet.position.z += bullet.shootZ * bulletSpeed;
@@ -796,7 +770,7 @@ function animate() {
     }
 
     // asteroids update
-    asteroidsArray.forEach((as) => {
+    for (const as of asteroidsArray) {
       // movement
       as.position.z -= as.movZ * asteroidSpeed;
       as.position.x -= as.movX * asteroidSpeed;
@@ -839,8 +813,9 @@ function animate() {
           screenShake.shake(camera, new THREE.Vector3(0, 0.8, 0), 250 /* ms */);
         }
       }
-    });
+    }
   }
+  // change screen instructions when paused
   if (pause) {
     $("#instructions1").html("WASD to move cannon");
     $("#instructions2").html("LShift to zoom");
@@ -849,18 +824,10 @@ function animate() {
   // remove all asteroids and bullets remaining from the previous game
   if (gameOver) {
     gameOverScreen();
-    asteroidsArray.forEach((as) => {
-      world.remove(as);
-      // let index = asteroidsArray.indexOf(as);
-      // asteroidsArray.splice(index, 1);
-    });
+
+    // remove all asteroids and bullets
     asteroidsArray = null;
     asteroidsArray = [];
-    bulletsArray.forEach((bullet) => {
-      world.remove(bullet);
-      // let index = bulletsArray.indexOf(bullet);
-      // bulletsArray.splice(index, 1);
-    });
     bulletsArray = null;
     bulletsArray = [];
   }
@@ -974,9 +941,9 @@ document.addEventListener(
 
 function modelCreation() {
   // asteroid
-  textureUrl = "images/asteroid.jpg";
+  textureUrl = "images/ak_images/asteroid.jpg";
   texture = new THREE.TextureLoader().load(textureUrl);
-  bumpTextureUrl = "images/asteroidBump.jpg";
+  bumpTextureUrl = "images/ak_images/asteroidBump.jpg";
   bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
   material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 0.5 });
 
@@ -985,7 +952,7 @@ function modelCreation() {
   asteroidModel.receiveShadow = true;
 
   // bullet
-  geometry = new THREE.DodecahedronGeometry(0.1, 0);
+  geometry = new THREE.DodecahedronGeometry(0.4, 0);
   material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
   bulletModel = new THREE.Mesh(geometry, material);
   bulletModel.castShadow = false;
