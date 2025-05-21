@@ -21,11 +21,13 @@ let renderer = null,
   highScore = 0,
   gameOver = false,
   pause = false,
+  zoomedIn = false,
+  dispersionAmount = 0,
   //                                                                                  gameplay tunning
   cannonPOV = true, // false for orbit controls, true for cannon POV
   asteroidsDifficulty = 2, // less is more asteroids at once
   asteroidSpeed = 0.3, // More is faster trayectory
-  fireRate = 0.05, // less is faster shooting
+  fireRate = 0.04, // less is faster shooting
   bulletDamage = 10, // damage from every bullet to asteroid
   bulletSpeed = 4, // speed of the bullet
   gunHealth = 20, // players health
@@ -33,7 +35,7 @@ let renderer = null,
   cannonRotationSpeed = 1.5, // more is faster rotation
   scorePerAsteroidDestroyed = 10, // score per asteroid destroyed (lol)
   asteroidHealth = 60, // health of each asteroid
-  slowCameraMovementSpeed = 1, // more is slower camera movement
+  slowCameraMovementSpeed = 5, // more is slower camera movement
   test = true,
   outOfBoundsLimit = 200;
 
@@ -98,13 +100,13 @@ function createScene(canvas) {
   screenShake = ScreenShake();
   // skybox
   var loader = new THREE.CubeTextureLoader();
-  loader.setPath("images/ak_images/cubemap/nebula/");
+  loader.setPath("images/cubemap/nebula/");
   var textureCube = loader.load(["right.png", "left.png", "up.png", "down.png", "front.png", "back.png"]);
   scene.background = textureCube;
   // Add  a camera so we can view the scene
   camera = new THREE.PerspectiveCamera(90, canvas.width / canvas.height, 0.1, 5000);
   // crosshair
-  textureUrl = "images/ak_images/crosshair.png";
+  textureUrl = "images/crosshair.png";
   texture = new THREE.TextureLoader().load(textureUrl);
   bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
   material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true, opacity: 1 });
@@ -166,8 +168,8 @@ function createWorld() {
   asteroidHome = new THREE.Object3D();
   ground = new THREE.Object3D();
   function asteroidBase() {
-    textureUrl = "images/ak_images/asteroid.jpg";
-    bumpTextureUrl = "images/ak_images/asteroidBump.jpg";
+    textureUrl = "images/asteroid.jpg";
+    bumpTextureUrl = "images/asteroidBump.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 0.3 });
@@ -246,9 +248,9 @@ function createWorld() {
   }
 
   function platformFunction() {
-    textureUrl = "images/ak_images/platform.jpg";
+    textureUrl = "images/platform.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/platform_specular.png";
+    bumpTextureUrl = "images/platform_specular.png";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, color: 0xffffff, bumpMap: bumpTexture, bumpScale: 0.1, transparent: true, opacity: 1 });
     geometry = new THREE.BoxGeometry(8, 8, 2);
@@ -290,9 +292,9 @@ function createWorld() {
     // gun wrapper
     gun = new THREE.Object3D();
     // base
-    textureUrl = "images/ak_images/base.jpg";
+    textureUrl = "images/base.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/base.jpg";
+    bumpTextureUrl = "images/base.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, color: 0xffffff, normalMap: bumpTexture, bumpScale: 1 });
     geometry = new THREE.BoxGeometry(2, 2, 1);
@@ -320,9 +322,9 @@ function createWorld() {
     gun.add(movingGun);
 
     // sphere
-    textureUrl = "images/ak_images/sphere.jpg";
+    textureUrl = "images/sphere.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/sphere_specular.png";
+    bumpTextureUrl = "images/sphere_specular.png";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, color: 0xfffb09, normalMap: bumpTexture, bumpScale: 1 });
     geometry = new THREE.SphereGeometry(0.75, 32, 32);
@@ -355,9 +357,9 @@ function createWorld() {
     }
 
     // cannon
-    textureUrl = "images/ak_images/sphere.jpg";
+    textureUrl = "images/sphere.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/sphere_specular.png";
+    bumpTextureUrl = "images/sphere_specular.png";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, normalMap: bumpTexture, bumpScale: 1 });
     geometry = new THREE.CylinderGeometry(0.12, 0.22, 0.1, 20, 1, false);
@@ -398,7 +400,7 @@ function createWorld() {
   }
 
   function planets() {
-    textureUrl = "images/ak_images/sun.jpg"; // sun
+    textureUrl = "images/sun.jpg"; // sun
     texture = new THREE.TextureLoader().load(textureUrl);
     material = new THREE.MeshBasicMaterial({ map: texture });
 
@@ -416,9 +418,9 @@ function createWorld() {
     sun.add(sunlight);
     world.add(sun);
 
-    textureUrl = "images/ak_images/earth_atmos_2048.jpg"; //                                                          earth and moon
+    textureUrl = "images/earth_atmos_2048.jpg"; //                                                          earth and moon
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/earthBump.jpg";
+    bumpTextureUrl = "images/earthBump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 1.5 });
     geometry = new THREE.SphereGeometry(0.25, 50, 50);
@@ -426,9 +428,9 @@ function createWorld() {
     earth = new THREE.Mesh(geometry, material);
     earth.receiveShadow = true;
     earthGroup.add(earth);
-    textureUrl = "images/ak_images/moon_1024.jpg";
+    textureUrl = "images/moon_1024.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/moon_bump.jpg";
+    bumpTextureUrl = "images/moon_bump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 0.2 });
     geometry = new THREE.SphereGeometry(0.06, 30, 30);
@@ -441,9 +443,9 @@ function createWorld() {
     world.add(earthGroup);
 
     //                                                                              mars
-    textureUrl = "images/ak_images/marsmap1k.jpg";
+    textureUrl = "images/marsmap1k.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/marsbump1k.jpg";
+    bumpTextureUrl = "images/marsbump1k.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 6 });
     geometry = new THREE.SphereGeometry(0.3, 30, 30);
@@ -457,9 +459,9 @@ function createWorld() {
     world.add(marsRotation);
 
     //                                                                          saturn
-    textureUrl = "images/ak_images/saturnmap.jpg";
+    textureUrl = "images/saturnmap.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/uranusBump.jpg";
+    bumpTextureUrl = "images/uranusBump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 7 });
     geometry = new THREE.SphereGeometry(0.5, 50, 50);
@@ -467,7 +469,7 @@ function createWorld() {
     saturn.castShadow = true;
     saturn.rotation.x = Math.PI / 2;
     // ring
-    textureUrl = "images/ak_images/saturnringcolor.jpg";
+    textureUrl = "images/saturnringcolor.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, transparent: false, opacity: 0.7 });
     geometry = new THREE.RingBufferGeometry(3, 5, 64);
@@ -482,7 +484,7 @@ function createWorld() {
     ring.receiveShadow = true;
     // moons
     geometry = new THREE.SphereGeometry(0.02, 20, 20);
-    textureUrl = "images/ak_images/saturnmap.jpg";
+    textureUrl = "images/saturnmap.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture });
     moon1 = new THREE.Mesh(geometry, material);
@@ -514,9 +516,9 @@ function createWorld() {
     world.add(saturnGroup);
 
     //                                                                                          uranus
-    textureUrl = "images/ak_images/uranusmap.jpg";
+    textureUrl = "images/uranusmap.jpg";
     texture = new THREE.TextureLoader().load(textureUrl);
-    bumpTextureUrl = "images/ak_images/uranusBump.jpg";
+    bumpTextureUrl = "images/uranusBump.jpg";
     bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
     material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 0.05 });
     geometry = new THREE.SphereGeometry(0.3, 30, 30);
@@ -590,16 +592,19 @@ function fireBullet(position) {
   // get cannontip direction to aim bullet
   let shootDirection = new THREE.Vector3();
   cannonTip.getWorldDirection(shootDirection);
-  bullet.shootZ = shootDirection.z;
-  bullet.shootY = shootDirection.y;
-  bullet.shootX = shootDirection.x;
-
+  bullet.shootZ = applyDispersion(shootDirection.z, dispersionAmount);
+  bullet.shootY = applyDispersion(shootDirection.y, dispersionAmount);
+  bullet.shootX = applyDispersion(shootDirection.x, dispersionAmount);
   // collision
   bullet.box = new THREE.Box3().setFromObject(bullet);
   bullet.bbox = new THREE.BoxHelper(bullet, 0x00ff00);
   bullet.time = Date.now();
   bulletsArray.push(bullet);
   world.add(bullet);
+}
+
+function applyDispersion(value, dispersionAmount = 0.01) {
+  return value + (Math.random() - 0.5) * 2 * dispersionAmount;
 }
 
 function createAsteroid() {
@@ -668,19 +673,19 @@ function animate() {
     // gun rotation
     if (movingUp) {
       if (sphereGun.rotation.x < 4.5) {
-        sphereGun.rotation.x += (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+        sphereGun.rotation.x += !zoomedIn ? angle * cannonRotationSpeed : (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
       }
     }
     if (movingDown) {
       if (sphereGun.rotation.x > 2.9) {
-        sphereGun.rotation.x -= (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+        sphereGun.rotation.x -= !zoomedIn ? angle * cannonRotationSpeed : (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
       }
     }
     if (movingLeft) {
-      movingGun.rotation.y += (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+      movingGun.rotation.y += !zoomedIn ? angle * cannonRotationSpeed : (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
     }
     if (movingRight) {
-      movingGun.rotation.y -= (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+      movingGun.rotation.y -= !zoomedIn ? angle * cannonRotationSpeed : (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
     }
 
     if (firing) {
@@ -705,18 +710,14 @@ function animate() {
       waitForNewAsteroid = 0;
       if (asteroidsDifficulty >= 0.99) asteroidsDifficulty -= 0.05;
     }
+    // bullet dispersion
+
+    if (firing && dispersionAmount < 0.03) dispersionAmount += 0.0003;
+    if (!firing) dispersionAmount = dispersionAmount > 0 ? dispersionAmount - 0.03 : 0;
+    if (dispersionAmount > 0) console.log(dispersionAmount);
 
     // bullets update
     for (const bullet of bulletsArray) {
-      // removing of bullets who lived to tell the story
-      // let deltaTimeBullet = now - bullet.time;
-      // if (deltaTimeBullet > 1500) {
-      //   world.remove(bullet);
-      //   let index = bulletsArray.indexOf(bullet);
-      //   bulletsArray.splice(index, 1);
-      //   break;
-      // }
-
       // movement
       bullet.position.z += bullet.shootZ * bulletSpeed;
       bullet.position.y += bullet.shootY * bulletSpeed;
@@ -872,6 +873,7 @@ document.addEventListener(
     if (event.keyCode === 32) {
       // fire
       event.preventDefault();
+      console.log(dispersionAmount);
       firing = true;
     }
     if (event.keyCode === 13) {
@@ -884,7 +886,8 @@ document.addEventListener(
     if (event.keyCode === 16) {
       // slow aiming
       event.preventDefault();
-      slowCameraMovementSpeed = 5;
+      zoomedIn = true;
+
       camera.zoom = 4;
       camera.rotation.x = Math.PI / -80;
       crosshair.position.set(-0.3, 1.3, -40);
@@ -925,13 +928,16 @@ document.addEventListener(
     if (event.keyCode === 32) {
       // fire
       event.preventDefault();
+      dispersionAmount > 0 ? dispersionAmount - 0.03 : 0;
+      console.log(dispersionAmount);
       firing = false;
     }
     if (event.keyCode === 16) {
       // fast aiming
       event.preventDefault();
-      slowCameraMovementSpeed = 1;
+      zoomedIn = false;
       camera.zoom = 1;
+      dispersionAmount = 0;
       camera.rotation.x = Math.PI / -25;
       camera.updateProjectionMatrix();
       crosshair.position.set(0, 1.2, -10);
@@ -941,9 +947,9 @@ document.addEventListener(
 
 function modelCreation() {
   // asteroid
-  textureUrl = "images/ak_images/asteroid.jpg";
+  textureUrl = "images/asteroid.jpg";
   texture = new THREE.TextureLoader().load(textureUrl);
-  bumpTextureUrl = "images/ak_images/asteroidBump.jpg";
+  bumpTextureUrl = "images/asteroidBump.jpg";
   bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
   material = new THREE.MeshPhongMaterial({ map: texture, bumpMap: bumpTexture, bumpScale: 0.5 });
 
@@ -952,20 +958,13 @@ function modelCreation() {
   asteroidModel.receiveShadow = true;
 
   // bullet
-  geometry = new THREE.DodecahedronGeometry(0.4, 0);
+  geometry = new THREE.DodecahedronGeometry(0.3, 0);
   material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
   bulletModel = new THREE.Mesh(geometry, material);
-  bulletModel.castShadow = false;
-  bulletModel.receiveShadow = false;
-  bulletLight = new THREE.PointLight(0xff0000, 0, 4.5);
-  bulletLight.castShadow = true;
-  bulletLight.shadow.camera.near = 1;
-  bulletLight.shadow.camera.far = 200;
-  bulletLight.shadow.camera.fov = 90;
-  bulletLight.intensity = 4;
-  bulletLight.shadow.mapSize.width = SHADOW_MAP_WIDTH;
-  bulletLight.shadow.mapSize.height = SHADOW_MAP_HEIGHT;
+  bulletModel.castShadow = true;
+  bulletModel.receiveShadow = true;
 
+  // cannon light that emulates light when firing the cannon
   minilight = new THREE.PointLight(0xff0000, 0, 4.5);
   minilight.position.z += 5;
   minilight.position.y -= 1;
