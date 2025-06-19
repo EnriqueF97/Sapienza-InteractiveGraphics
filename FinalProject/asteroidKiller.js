@@ -20,39 +20,42 @@ let renderer = null,
   score = 0,
   highScore = 0,
   gameOver = false,
-  pause = false,
-  //                                                                                 camera tunning
-  zoomedIn = false,
-  dispersionAmount = 0,
-  momentumUp = 0,
-  momentumDown = 0,
-  momentumLeft = 0,
-  momentumRight = 0,
-  momentumThreshold = 0.8,
-  acceleration = 0.0001, // how fast the camera will accelerate
-  cannonRotationSpeed = 0.8, // more is faster rotation
-  slowCameraMovementSpeed = 5, // more is slower camera movement
-  //                                                                                  gameplay tunning
-  cannonPOV = true, // false for orbit controls, true for cannon POV
-  asteroidsDifficulty = 3, // less is more asteroids at once
-  asteroidSpeed = 0.3, // More is faster speed
-  fireRate = 0.03, // less is faster shooting
-  bulletDamage = 10, // damage from every bullet to asteroid
-  bulletSpeed = 5, // speed of the bullet
+  pause = true,
   gunHealth = 20, // players health
-  asteroidDamage = 1, // how much an asteroid hit will deal
-  scorePerAsteroidDestroyed = 10, // score per asteroid destroyed (lol)
-  asteroidHealth = 150, // health of each asteroid
-  test = true,
-  outOfBoundsLimit = 600;
+  outOfBoundsLimit = 600; // distance from the center of the world where the asteroid will be destroyed
 
-// estados de movimiento de cañon
-let movingRight = false,
-  movingLeft = false,
-  movingUp = false,
-  movingDown = false,
-  firing = false,
-  slowMoving = false;
+// asteroid tunning
+let asteroidConfig = {
+  asteroidsDifficulty: 3, // less is more asteroids at once
+  asteroidSpeed: 0.3, // More is faster speed
+  fireRate: 0.03, // less is faster shooting
+  bulletDamage: 10, // damage from every bullet to asteroid
+  bulletSpeed: 5, // speed of the bullet
+  asteroidDamage: 1, // how much an asteroid hit will deal
+  scorePerAsteroidDestroyed: 10, // score per asteroid destroyed (lol)
+  asteroidHealth: 100, // health of each asteroid
+};
+
+// camera tunning
+let cameraControls = {
+  movingLeft: false,
+  movingUp: false,
+  movingDown: false,
+  movingRight: false,
+  firing: false,
+  slowMoving: false,
+  cannonPOV: true, // false for orbit controls, true for cannon POV
+  zoomedIn: false,
+  dispersionAmount: 0,
+  momentumUp: 0,
+  momentumDown: 0,
+  momentumLeft: 0,
+  momentumRight: 0,
+  momentumThreshold: 0.8,
+  acceleration: 0.0001, // how fast the camera will accelerate
+  cannonRotationSpeed: 0.8, // more is faster rotation
+  slowCameraMovementSpeed: 5, // more is slower camera movement
+};
 
 let textureUrl = null;
 let bumpTextureUrl = null;
@@ -137,7 +140,7 @@ function createScene(canvas) {
     cannonShotSound.setBuffer(buffer);
     cannonShotSound.setLoop(false);
     cannonShotSound.setVolume(0.2);
-    cannonShotSound.duration = fireRate;
+    cannonShotSound.duration = asteroidConfig.fireRate;
   });
   audioLoader.load("sounds/asteroidImpact.ogg", function (buffer) {
     // asteroid hitting the upper platform
@@ -150,7 +153,7 @@ function createScene(canvas) {
     asteroidHitSound.setBuffer(buffer);
     asteroidHitSound.setLoop(false);
     asteroidHitSound.setVolume(0.07);
-    asteroidHitSound.duration = fireRate;
+    asteroidHitSound.duration = asteroidConfig.fireRate;
   });
   audioLoader.load("sounds/asteroidDestruction.wav", function (buffer) {
     // destruction of an asteroid
@@ -348,7 +351,7 @@ function createWorld() {
     movingGun.add(sphereGun);
     movingGun.add(sphereGunBox);
 
-    if (cannonPOV) {
+    if (cameraControls.cannonPOV) {
       // camera attached to the sphereGun
       camera.position.set(1.2, -1, -1.5);
       camera.rotation.x = Math.PI / -25;
@@ -585,6 +588,7 @@ function fireBullet(position) {
   bulletCount += 1;
   bullet.position = position;
   bullet.position.y += 1.8;
+  bullet.box = new THREE.Box3().setFromObject(bullet);
 
   // update every group's matrix to get their true world positions
   asteroidHome.updateMatrixWorld();
@@ -599,11 +603,10 @@ function fireBullet(position) {
   // get cannontip direction to aim bullet
   let shootDirection = new THREE.Vector3();
   cannonTip.getWorldDirection(shootDirection);
-  bullet.shootZ = applyDispersion(shootDirection.z, dispersionAmount);
-  bullet.shootY = applyDispersion(shootDirection.y, dispersionAmount);
-  bullet.shootX = applyDispersion(shootDirection.x, dispersionAmount);
+  bullet.shootZ = applyDispersion(shootDirection.z, cameraControls.dispersionAmount);
+  bullet.shootY = applyDispersion(shootDirection.y, cameraControls.dispersionAmount);
+  bullet.shootX = applyDispersion(shootDirection.x, cameraControls.dispersionAmount);
   // collision
-  bullet.box = new THREE.Box3().setFromObject(bullet);
   bullet.bbox = new THREE.BoxHelper(bullet, 0x00ff00);
   bullet.time = Date.now();
   bulletsArray.push(bullet);
@@ -611,7 +614,7 @@ function fireBullet(position) {
 }
 
 function applyDispersion(value, dispersionAmount = 0.01) {
-  return value + (Math.random() - 0.5) * 2 * dispersionAmount;
+  return value + (Math.random() - 0.5) * 2 * cameraControls.dispersionAmount;
 }
 
 function createAsteroid() {
@@ -629,9 +632,10 @@ function createAsteroid() {
 
   asteroid.scale.set(asteroidSize, asteroidSize, asteroidSize);
   asteroid.asteroidId = asteroidCount;
-  asteroid.health = asteroidHealth + asteroidSize * 5;
+  asteroid.health = asteroidConfig.asteroidHealth + asteroidSize * 5;
   asteroid.date = Date.now();
-  asteroid.asteroidSpeed = asteroidSpeed - asteroidSize * 0.05;
+  asteroid.speed = asteroidConfig.asteroidSpeed - asteroidSize * 0.05;
+  asteroid.damage = asteroidSize * 0;
   asteroidCount += 1;
   x = getRndInteger(1500, 300) - 750;
   y = getRndInteger(1500, 300) - 700;
@@ -652,6 +656,24 @@ function createAsteroid() {
 
   asteroidsArray.push(asteroid);
   world.add(asteroid);
+}
+
+function destroyBullet(bullet) {
+  world.remove(bullet); // destroy bullet
+
+  let index = bulletsArray.indexOf(bullet);
+  bulletsArray.splice(index, 1);
+}
+
+function destroyAsteroid(as) {
+  // asteroid destruction sound
+  asteroidDestructionSound.play();
+  // asteroid explosion
+  world.remove(as);
+  asteroidsArray.splice(asteroidsArray.indexOf(as), 1);
+  score += asteroidConfig.scorePerAsteroidDestroyed;
+  changeScore(score);
+  console.log("Asteroid destroyed: " + as.asteroidId);
 }
 
 function animate() {
@@ -690,55 +712,71 @@ function animate() {
     marsGroup.rotation.y -= angle / 40;
     saturnGroup.rotation.z += angle / 40;
 
-    momentumThreshold = 0.03;
-    acceleration = 0.001; // how fast the camera will accelerate
-    slowCameraMovementSpeed = 80; // more is slower camera movement
+    cameraControls.momentumThreshold = 0.03;
+    cameraControls.acceleration = 0.001; // how fast the camera will accelerate
+    cameraControls.slowCameraMovementSpeed = 80; // more is slower camera movement
 
     // camera momentum
-    if (movingUp) {
-      momentumUp < momentumThreshold ? (momentumUp += acceleration) : (momentumUp = momentumThreshold);
-      momentumDown > 0 ? (momentumDown -= acceleration) : (momentumDown = 0);
-    } else if (momentumUp > 0) {
-      momentumUp -= acceleration;
+    if (cameraControls.movingUp) {
+      cameraControls.momentumUp < cameraControls.momentumThreshold
+        ? (cameraControls.momentumUp += cameraControls.acceleration)
+        : (cameraControls.momentumUp = cameraControls.momentumThreshold);
+      cameraControls.momentumDown > 0 ? (cameraControls.momentumDown -= cameraControls.acceleration) : (cameraControls.momentumDown = 0);
+    } else if (cameraControls.momentumUp > 0) {
+      cameraControls.momentumUp -= cameraControls.acceleration;
     }
-    if (movingDown) {
-      momentumDown < momentumThreshold ? (momentumDown += acceleration) : (momentumDown = momentumThreshold);
-      momentumUp > 0 ? (momentumUp -= acceleration) : (momentumUp = 0);
-    } else if (momentumDown > 0) {
-      momentumDown -= acceleration;
+    if (cameraControls.movingDown) {
+      cameraControls.momentumDown < cameraControls.momentumThreshold
+        ? (cameraControls.momentumDown += cameraControls.acceleration)
+        : (cameraControls.momentumDown = cameraControls.momentumThreshold);
+      cameraControls.momentumUp > 0 ? (cameraControls.momentumUp -= cameraControls.acceleration) : (cameraControls.momentumUp = 0);
+    } else if (cameraControls.momentumDown > 0) {
+      cameraControls.momentumDown -= cameraControls.acceleration;
     }
-    if (movingLeft) {
-      momentumLeft < momentumThreshold ? (momentumLeft += acceleration) : (momentumLeft = momentumThreshold);
-      momentumRight > 0 ? (momentumRight -= acceleration) : (momentumRight = 0);
-    } else if (momentumLeft > 0) {
-      momentumLeft -= acceleration;
+    if (cameraControls.movingLeft) {
+      cameraControls.momentumLeft < cameraControls.momentumThreshold
+        ? (cameraControls.momentumLeft += cameraControls.acceleration)
+        : (cameraControls.momentumLeft = cameraControls.momentumThreshold);
+      cameraControls.momentumRight > 0 ? (cameraControls.momentumRight -= cameraControls.acceleration) : (cameraControls.momentumRight = 0);
+    } else if (cameraControls.momentumLeft > 0) {
+      cameraControls.momentumLeft -= cameraControls.acceleration;
     }
-    if (movingRight) {
-      momentumRight < momentumThreshold ? (momentumRight += acceleration) : (momentumRight = momentumThreshold);
-      momentumLeft > 0 ? (momentumLeft -= acceleration) : (momentumLeft = 0);
-    } else if (momentumRight > 0) {
-      momentumRight -= acceleration;
+    if (cameraControls.movingRight) {
+      cameraControls.momentumRight < cameraControls.momentumThreshold
+        ? (cameraControls.momentumRight += cameraControls.acceleration)
+        : (cameraControls.momentumRight = cameraControls.momentumThreshold);
+      cameraControls.momentumLeft > 0 ? (cameraControls.momentumLeft -= cameraControls.acceleration) : (cameraControls.momentumLeft = 0);
+    } else if (cameraControls.momentumRight > 0) {
+      cameraControls.momentumRight -= cameraControls.acceleration;
     }
 
-    console.log("movingMomentumLeft: " + momentumLeft);
-    console.log("movingMomentumRight: " + momentumRight);
+    // console.log("movingcameraMovementConfig.momentumLeft: " + cameraMovementConfig.momentumLeft);
+    // console.log("movingcameraMovementConfig.momentumRight: " + cameraMovementConfig.momentumRight);
 
     // gun rotation
-    if (movingUp || momentumUp > 0) {
+    if (cameraControls.movingUp || cameraControls.momentumUp > 0) {
       if (sphereGun.rotation.x < 4.5) {
-        sphereGun.rotation.x += !zoomedIn ? momentumUp + angle * cannonRotationSpeed : momentumUp + (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+        sphereGun.rotation.x += !cameraControls.zoomedIn
+          ? cameraControls.momentumUp + angle * cameraControls.cannonRotationSpeed
+          : cameraControls.momentumUp + (angle * cameraControls.cannonRotationSpeed) / cameraControls.slowCameraMovementSpeed;
       }
     }
-    if (movingDown || momentumDown > 0) {
+    if (cameraControls.movingDown || cameraControls.momentumDown > 0) {
       if (sphereGun.rotation.x > 2.9) {
-        sphereGun.rotation.x -= !zoomedIn ? momentumDown + angle * cannonRotationSpeed : momentumDown + (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+        sphereGun.rotation.x -= !cameraControls.zoomedIn
+          ? cameraControls.momentumDown + angle * cameraControls.cannonRotationSpeed
+          : cameraControls.momentumDown + (angle * cameraControls.cannonRotationSpeed) / cameraControls.slowCameraMovementSpeed;
       }
     }
-    if (movingLeft || momentumLeft > 0) {
-      movingGun.rotation.y += !zoomedIn ? momentumLeft + angle * cannonRotationSpeed : momentumLeft + (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+    if (cameraControls.movingLeft || cameraControls.momentumLeft > 0) {
+      movingGun.rotation.y += !cameraControls.zoomedIn
+        ? cameraControls.momentumLeft + angle * cameraControls.cannonRotationSpeed
+        : cameraControls.momentumLeft + (angle * cameraControls.cannonRotationSpeed) / cameraControls.slowCameraMovementSpeed;
     }
-    if (movingRight || momentumRight > 0) {
-      movingGun.rotation.y -= !zoomedIn ? momentumRight + angle * cannonRotationSpeed : momentumRight + (angle * cannonRotationSpeed) / slowCameraMovementSpeed;
+    if (cameraControls.movingRight || cameraControls.momentumRight > 0) {
+      movingGun.rotation.y -= !cameraControls.zoomedIn
+        ? cameraControls.momentumRight + angle * cameraControls.cannonRotationSpeed
+        : cameraControls.momentumRight + (angle * cameraControls.cannonRotationSpeed) / cameraControls.slowCameraMovementSpeed;
     }
 
     //this is used to make the lighting ilusion while shooting the cannon
@@ -747,43 +785,42 @@ function animate() {
     }
 
     // asteroid generation, asteroidsDifficulty will be lowering as time goes by spawning asteroids quicker
-    if (waitForNewAsteroid > asteroidsDifficulty) {
+    if (waitForNewAsteroid > asteroidConfig.asteroidsDifficulty) {
       createAsteroid();
       waitForNewAsteroid = 0;
-      if (asteroidsDifficulty >= 0.99) asteroidsDifficulty -= 0.05;
+      if (asteroidConfig.asteroidsDifficulty >= 0.99) asteroidConfig.asteroidsDifficulty -= 0.05;
     }
 
     // decrease firerate if cannon is firing
     if (firing) {
-      if (seconds > fireRate) {
+      if (seconds > asteroidConfig.fireRate) {
         cannonShotSound.play();
         minilight.intensity = 4;
         fireBullet(sphereGun.getWorldPosition());
         if (screenShake.enabled == false) {
-          screenShake.shake(camera, new THREE.Vector3(0, 0, 0.12), fireRate * 1000 - 0.2 /* ms */);
+          screenShake.shake(camera, new THREE.Vector3(0, 0, 0.12), asteroidConfig.fireRate * 1000 - 0.2 /* ms */);
         }
         seconds = 0;
       }
     }
     // bullet dispersion when firing
-    if (firing && dispersionAmount < 0.04) dispersionAmount += 0.0002;
-    if (!firing) dispersionAmount = dispersionAmount > 0 ? dispersionAmount - 0.0004 : 0;
-    if (dispersionAmount > 0) console.log(dispersionAmount);
-    if (!zoomedIn) reticle.scale.set(1 + 60 * dispersionAmount, 1 + 60 * dispersionAmount, reticle.scale.z);
-    else reticle.scale.set(1.5 + 60 * dispersionAmount, 1.5 + 60 * dispersionAmount, reticle.scale.z);
-    fireRate = 0.03 + dispersionAmount * 0.7;
+    if (firing && cameraControls.dispersionAmount < 0.04) cameraControls.dispersionAmount += 0.0002;
+    if (!firing) cameraControls.dispersionAmount = cameraControls.dispersionAmount > 0 ? cameraControls.dispersionAmount - 0.0004 : 0;
+    if (cameraControls.dispersionAmount > 0) console.log(cameraControls.dispersionAmount);
+    if (!cameraControls.zoomedIn) reticle.scale.set(1 + 60 * cameraControls.dispersionAmount, 1 + 60 * cameraControls.dispersionAmount, reticle.scale.z);
+    else reticle.scale.set(1.5 + 60 * cameraControls.dispersionAmount, 1.5 + 60 * cameraControls.dispersionAmount, reticle.scale.z);
+    asteroidConfig.fireRate = 0.03 + cameraControls.dispersionAmount * 0.7;
 
     // cannon overheating
-    sphereGun.material.color.setRGB(dispersionAmount * 80, 0, 0);
+    sphereGun.material.color.setRGB(cameraControls.dispersionAmount * 80, 0, 0);
 
     // bullets update
     for (const bullet of bulletsArray) {
       // movement
-      bullet.position.z += bullet.shootZ * bulletSpeed;
-      bullet.position.y += bullet.shootY * bulletSpeed;
-      bullet.position.x += bullet.shootX * bulletSpeed;
-      bullet.box = new THREE.Box3().setFromObject(bullet);
-      bullet.bbox = new THREE.BoxHelper(bullet, 0x00ff00);
+      bullet.position.z += bullet.shootZ * asteroidConfig.bulletSpeed;
+      bullet.position.y += bullet.shootY * asteroidConfig.bulletSpeed;
+      bullet.position.x += bullet.shootX * asteroidConfig.bulletSpeed;
+      bullet.box.setFromObject(bullet);
 
       // delete bullet if it goes out of bounds
       if (
@@ -791,40 +828,23 @@ function animate() {
         bullet.position.z > outOfBoundsLimit ||
         bullet.position.x < -outOfBoundsLimit ||
         bullet.position.x > outOfBoundsLimit
-      ) {
-        world.remove(bullet);
-        let index = bulletsArray.indexOf(bullet);
-        bulletsArray.splice(index, 1);
-      }
+      )
+        destroyBullet(bullet); // remove bullet from the array
 
       // check for collisions with asteroids
       for (const as of asteroidsArray) {
-        // removing of bullets who lived to tell the story
         let deltaTimeAsteroid = now - as.time;
-        if (deltaTimeAsteroid > 13000) {
-          let index = asteroidsArray.indexOf(as);
-          world.remove(as);
-          asteroidsArray.splice(index, 1);
-        }
+        if (deltaTimeAsteroid > 13000) destroyAsteroid(as);
 
         if (as.box.intersectsBox(bullet.box)) {
           asteroidHitSound.play();
-          // destroy bullet
-          world.remove(bullet);
 
-          let index = bulletsArray.indexOf(bullet);
-          bulletsArray.splice(index, 1);
+          destroyBullet(bullet); // remove bullet from the array
           //lower asteroid health
-          as.health -= bulletDamage;
+          as.health -= asteroidConfig.bulletDamage;
           // if asteroid health is lower than 0 we remove it from the scene
           if (as.health <= 0) {
-            asteroidDestructionSound.play();
-            world.remove(as);
-
-            index = asteroidsArray.indexOf(as);
-            asteroidsArray.splice(index, 1);
-            score += scorePerAsteroidDestroyed;
-            changeScore(score);
+            destroyAsteroid(as);
           }
         }
       }
@@ -833,21 +853,19 @@ function animate() {
     // asteroids update
     for (const as of asteroidsArray) {
       // movement
-      as.position.z -= as.movZ * as.asteroidSpeed;
-      as.position.x -= as.movX * as.asteroidSpeed;
-      as.position.y -= as.movY * as.asteroidSpeed;
+      as.position.z -= as.movZ * as.speed;
+      as.position.x -= as.movX * as.speed;
+      as.position.y -= as.movY * as.speed;
       as.rotation.x += angle;
       as.rotation.y -= angle;
-      as.box = new THREE.Box3().setFromObject(as);
+      as.box.setFromObject(as); // update collision box3
 
       // asteroids check for collision with objects
-      // collision with invincibleBox
       if (invincibleBoxCol.intersectsBox(as.box)) {
+        // collision with invincibleBox (placed below the platform, no damage)
         asteroidMinorImpact.play();
         // destroy asteroid
-        let index = asteroidsArray.indexOf(as);
-        world.remove(as);
-        asteroidsArray.splice(index, 1);
+        destroyAsteroid(as);
         // weak camera shake
         if (screenShake.enabled == false) {
           screenShake.shake(camera, new THREE.Vector3(0, 0.1, 0), 250 /* ms */);
@@ -856,15 +874,12 @@ function animate() {
       // collision with platformBox
       if (platformBox.intersectsBox(as.box)) {
         // destroy asteroid
-        let index = asteroidsArray.indexOf(as);
-        world.remove(as);
-        asteroidsArray.splice(index, 1);
         //sound
         asteroidImpactSound.play();
         // lower sphereGun health
-        platform.health -= asteroidDamage;
+        platform.health -= asteroidConfig.asteroidDamage;
         changeHealth(platform.health);
-        console.log(platform.health);
+        destroyAsteroid(as);
         if (platform.health <= 0) {
           gameOver = true;
           screenShake.shake(camera, new THREE.Vector3(0, 1.5, 0), 1000 /* ms */);
@@ -918,22 +933,22 @@ document.addEventListener(
     if (event.keyCode === 68) {
       // right
       event.preventDefault();
-      movingRight = true;
+      cameraControls.movingRight = true;
     }
     if (event.keyCode === 65) {
       // left
       event.preventDefault();
-      movingLeft = true;
+      cameraControls.movingLeft = true;
     }
     if (event.keyCode === 87) {
       // up
       event.preventDefault();
-      movingUp = true;
+      cameraControls.movingUp = true;
     }
     if (event.keyCode === 83) {
       // down
       event.preventDefault();
-      movingDown = true;
+      cameraControls.movingDown = true;
     }
     if (event.keyCode === 32) {
       // fire
@@ -950,7 +965,7 @@ document.addEventListener(
     if (event.keyCode === 16) {
       // slow aiming
       event.preventDefault();
-      zoomedIn = true;
+      cameraControls.zoomedIn = true;
 
       camera.zoom = 4;
       camera.rotation.x = Math.PI / -80;
@@ -972,22 +987,22 @@ document.addEventListener(
     if (event.keyCode === 68) {
       // right
       event.preventDefault();
-      movingRight = false;
+      cameraControls.movingRight = false;
     }
     if (event.keyCode === 65) {
       // left
       event.preventDefault();
-      movingLeft = false;
+      cameraControls.movingLeft = false;
     }
     if (event.keyCode === 87) {
       // up
       event.preventDefault();
-      movingUp = false;
+      cameraControls.movingUp = false;
     }
     if (event.keyCode === 83) {
       // down
       event.preventDefault();
-      movingDown = false;
+      cameraControls.movingDown = false;
     }
     if (event.keyCode === 32) {
       // fire
@@ -997,7 +1012,7 @@ document.addEventListener(
     if (event.keyCode === 16) {
       // fast aiming
       event.preventDefault();
-      zoomedIn = false;
+      cameraControls.zoomedIn = false;
       camera.zoom = 1;
       camera.rotation.x = Math.PI / -25;
       camera.updateProjectionMatrix();
